@@ -120,11 +120,11 @@ export default function GamePlay({ gameState, onEndGame }) {
             <>
               <div className="absolute left-1 bottom-1 px-1.5 py-0.5 rounded bg-white/70 text-[10px] font-bold leading-tight"
                 style={{ color: flipped ? '#ef4444' : '#3b82f6' }}>
-                {flipped ? game.awayTeam : game.homeTeam}
+                {flipped ? game.awayTeam : game.homeTeam} Goal
               </div>
               <div className="absolute right-1 bottom-1 px-1.5 py-0.5 rounded bg-white/70 text-[10px] font-bold leading-tight text-right"
                 style={{ color: flipped ? '#3b82f6' : '#ef4444' }}>
-                {flipped ? game.homeTeam : game.awayTeam}
+                {flipped ? game.homeTeam : game.awayTeam} Goal
               </div>
             </>
           )}
