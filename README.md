@@ -63,6 +63,12 @@ After the final period, tap "End & Save Game" and the app generates a full summa
 - **Export as PDF** to share with your coaching staff or email to parents
 - All games are **saved automatically** and show up on the home screen so you can revisit any past game's summary
 
+Here's a full example of an exported game report ([download the PDF](docs/HawksShotReport.pdf)):
+
+<p align="center">
+  <img src="docs/sample-report-page-1.png" alt="Example exported game report — Hawks vs Eagles" width="700" />
+</p>
+
 ## Tips for Coaches
 
 - You don't have to fill in every field on the shot popup. If the action is fast and you just want to capture the location, tap the ice and hit OK. You can always tell the story from the shot map later.
