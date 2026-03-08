@@ -91,6 +91,6 @@ npm run dev
 
 ---
 
-## Dedication
+## Shoutout
 
 Dedicated to my son's 12U hockey team. Good luck in the playoffs. Go Hawks!
