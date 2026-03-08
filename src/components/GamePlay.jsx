@@ -98,7 +98,7 @@ export default function GamePlay({ gameState, onEndGame }) {
 
       {/* Rink */}
       <div className="flex-1 flex items-center justify-center mb-3">
-        <div className="w-full">
+        <div className="w-full relative">
           <HockeyRink onTapRink={currentPeriod !== null ? handleTapRink : null}>
             {/* Fade-out shot confirmation */}
             {fadeShot && (
@@ -115,12 +115,18 @@ export default function GamePlay({ gameState, onEndGame }) {
             )}
           </HockeyRink>
 
-          {/* Period direction hint */}
+          {/* Team goal labels overlaid on rink */}
           {currentPeriod !== null && (
-            <div className="flex justify-between text-xs text-slate-400 px-2 mt-1">
-              <span>{flipped ? game.awayTeam : game.homeTeam} &rarr;</span>
-              <span>&larr; {flipped ? game.homeTeam : game.awayTeam}</span>
-            </div>
+            <>
+              <div className="absolute left-1 bottom-1 px-1.5 py-0.5 rounded bg-white/70 text-[10px] font-bold leading-tight"
+                style={{ color: flipped ? '#ef4444' : '#3b82f6' }}>
+                {flipped ? game.awayTeam : game.homeTeam}
+              </div>
+              <div className="absolute right-1 bottom-1 px-1.5 py-0.5 rounded bg-white/70 text-[10px] font-bold leading-tight text-right"
+                style={{ color: flipped ? '#3b82f6' : '#ef4444' }}>
+                {flipped ? game.homeTeam : game.awayTeam}
+              </div>
+            </>
           )}
         </div>
       </div>
