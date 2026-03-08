@@ -67,7 +67,7 @@ After the final period, tap "End & Save Game" and the app generates a full summa
 
 - You don't have to fill in every field on the shot popup. If the action is fast and you just want to capture the location, tap the ice and hit OK. You can always tell the story from the shot map later.
 - If you have an assistant coach or parent willing to help, one person can track home shots and the other can track away shots.
-- The heatmap is particularly useful for showing players where the team is generating offense from and where the opposing team is getting their looks. Great film-session material.
+- The heatmap is particularly useful for showing players where the team is generating offense from and where the opposing team is getting their looks. 
 - The per-player stats are only as good as the jersey numbers you enter, so don't stress about catching every one. Even partial data tells a story.
 
 ## Privacy and Data
