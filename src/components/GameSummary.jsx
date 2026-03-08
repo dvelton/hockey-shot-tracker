@@ -52,22 +52,49 @@ export default function GameSummary({ game, onBack }) {
     return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
   };
 
-  // Zone analysis: divide rink into thirds (defensive 0-0.33, neutral 0.33-0.66, offensive 0.66-1.0)
-  const zoneLabel = (x) => {
-    if (x < 0.375) return 'left';
-    if (x > 0.625) return 'right';
+  // Zone analysis: classify shots as offensive/neutral/defensive relative to each team.
+  // Standard hockey: P1 & P3 & OT: home attacks right. P2: home attacks left.
+  const classifyZone = (x, team, periodNumber) => {
+    const homeAttacksRight = periodNumber !== 2;
+    const isLeft = x < 0.375;
+    const isRight = x > 0.625;
+
+    if (team === 'home') {
+      if (homeAttacksRight) {
+        if (isRight) return 'offensive';
+        if (isLeft) return 'defensive';
+      } else {
+        if (isLeft) return 'offensive';
+        if (isRight) return 'defensive';
+      }
+    } else if (team === 'away') {
+      if (homeAttacksRight) {
+        if (isLeft) return 'offensive';
+        if (isRight) return 'defensive';
+      } else {
+        if (isRight) return 'offensive';
+        if (isLeft) return 'defensive';
+      }
+    }
     return 'neutral';
   };
 
-  const zoneStats = (shots) => {
-    const left = shots.filter((s) => zoneLabel(s.x) === 'left');
-    const neutral = shots.filter((s) => zoneLabel(s.x) === 'neutral');
-    const right = shots.filter((s) => zoneLabel(s.x) === 'right');
-    return { left, neutral, right };
+  // Tag each shot with its period, then compute zone stats
+  const taggedShots = game.periods.flatMap((p) =>
+    p.shots.map((s) => ({ ...s, periodNumber: p.number }))
+  );
+  const taggedHome = taggedShots.filter((s) => s.team === 'home');
+  const taggedAway = taggedShots.filter((s) => s.team === 'away');
+
+  const buildZoneStats = (shots, team) => {
+    const offensive = shots.filter((s) => classifyZone(s.x, team, s.periodNumber) === 'offensive');
+    const neutral = shots.filter((s) => classifyZone(s.x, team, s.periodNumber) === 'neutral');
+    const defensive = shots.filter((s) => classifyZone(s.x, team, s.periodNumber) === 'defensive');
+    return { offensive, neutral, defensive };
   };
 
-  const homeZones = zoneStats(homeShots);
-  const awayZones = zoneStats(awayShots);
+  const homeZones = buildZoneStats(taggedHome, 'home');
+  const awayZones = buildZoneStats(taggedAway, 'away');
 
   // Build player stats
   const playerStats = {};
@@ -333,27 +360,27 @@ export default function GameSummary({ game, onBack }) {
               <div className="bg-slate-50 rounded-xl p-4">
                 <div className="text-sm font-semibold text-blue-600 mb-2">{game.homeTeam}</div>
                 <div className="space-y-1.5">
-                  <ZoneBar label="Left" count={homeZones.left.length} total={homeShots.length} color="#3b82f6" />
-                  <ZoneBar label="Center" count={homeZones.neutral.length} total={homeShots.length} color="#3b82f6" />
-                  <ZoneBar label="Right" count={homeZones.right.length} total={homeShots.length} color="#3b82f6" />
+                  <ZoneBar label="Offensive" count={homeZones.offensive.length} total={homeShots.length} color="#3b82f6" />
+                  <ZoneBar label="Neutral" count={homeZones.neutral.length} total={homeShots.length} color="#3b82f6" />
+                  <ZoneBar label="Defensive" count={homeZones.defensive.length} total={homeShots.length} color="#3b82f6" />
                 </div>
                 <div className="text-xs text-slate-400 mt-2">
-                  {pct(homeZones.left.length, homeShots.length)} left
-                  {' / '}{pct(homeZones.neutral.length, homeShots.length)} center
-                  {' / '}{pct(homeZones.right.length, homeShots.length)} right
+                  {pct(homeZones.offensive.length, homeShots.length)} offensive
+                  {' / '}{pct(homeZones.neutral.length, homeShots.length)} neutral
+                  {' / '}{pct(homeZones.defensive.length, homeShots.length)} defensive
                 </div>
               </div>
               <div className="bg-slate-50 rounded-xl p-4">
                 <div className="text-sm font-semibold text-red-500 mb-2">{game.awayTeam}</div>
                 <div className="space-y-1.5">
-                  <ZoneBar label="Left" count={awayZones.left.length} total={awayShots.length} color="#ef4444" />
-                  <ZoneBar label="Center" count={awayZones.neutral.length} total={awayShots.length} color="#ef4444" />
-                  <ZoneBar label="Right" count={awayZones.right.length} total={awayShots.length} color="#ef4444" />
+                  <ZoneBar label="Offensive" count={awayZones.offensive.length} total={awayShots.length} color="#ef4444" />
+                  <ZoneBar label="Neutral" count={awayZones.neutral.length} total={awayShots.length} color="#ef4444" />
+                  <ZoneBar label="Defensive" count={awayZones.defensive.length} total={awayShots.length} color="#ef4444" />
                 </div>
                 <div className="text-xs text-slate-400 mt-2">
-                  {pct(awayZones.left.length, awayShots.length)} left
-                  {' / '}{pct(awayZones.neutral.length, awayShots.length)} center
-                  {' / '}{pct(awayZones.right.length, awayShots.length)} right
+                  {pct(awayZones.offensive.length, awayShots.length)} offensive
+                  {' / '}{pct(awayZones.neutral.length, awayShots.length)} neutral
+                  {' / '}{pct(awayZones.defensive.length, awayShots.length)} defensive
                 </div>
               </div>
             </div>
