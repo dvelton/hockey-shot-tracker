@@ -189,7 +189,8 @@ export default function GamePlay({ gameState, onEndGame }) {
       {/* Shot overlay */}
       {showOverlay && (
         <ShotOverlay
-          shots={allShots}
+          periods={game.periods}
+          currentPeriod={currentPeriod}
           homeTeam={game.homeTeam}
           awayTeam={game.awayTeam}
           onClose={() => setShowOverlay(false)}

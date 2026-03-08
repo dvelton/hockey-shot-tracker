@@ -1,12 +1,28 @@
+import { useState } from 'react';
 import HockeyRink from './HockeyRink';
 
-export default function ShotOverlay({ shots, homeTeam, awayTeam, onClose }) {
+export default function ShotOverlay({ periods, currentPeriod, homeTeam, awayTeam, onClose }) {
+  const [selectedPeriod, setSelectedPeriod] = useState('all');
+
+  const periodLabel = (n) => {
+    if (n === 'OT') return 'OT';
+    if (n === 1) return '1st';
+    if (n === 2) return '2nd';
+    if (n === 3) return '3rd';
+    return `P${n}`;
+  };
+
+  const allShots = periods.flatMap((p) => p.shots);
+  const displayShots = selectedPeriod === 'all'
+    ? allShots
+    : periods.find((p) => String(p.number) === String(selectedPeriod))?.shots || [];
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-4">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2">
           <h3 className="text-lg font-bold text-slate-800">
-            Recorded Shots ({shots.length})
+            Recorded Shots ({displayShots.length})
           </h3>
           <button
             onClick={onClose}
@@ -19,13 +35,43 @@ export default function ShotOverlay({ shots, homeTeam, awayTeam, onClose }) {
           </button>
         </div>
 
+        {/* Period filter */}
+        {periods.length > 1 && (
+          <div className="flex gap-1.5 mb-3 flex-wrap">
+            <button
+              onClick={() => setSelectedPeriod('all')}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                selectedPeriod === 'all'
+                  ? 'bg-slate-800 text-white'
+                  : 'bg-slate-100 text-slate-600 active:bg-slate-200'
+              }`}
+            >
+              All ({allShots.length})
+            </button>
+            {periods.map((p) => (
+              <button
+                key={p.number}
+                onClick={() => setSelectedPeriod(p.number)}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                  String(selectedPeriod) === String(p.number)
+                    ? 'bg-slate-800 text-white'
+                    : 'bg-slate-100 text-slate-600 active:bg-slate-200'
+                }`}
+              >
+                {periodLabel(p.number)} ({p.shots.length})
+              </button>
+            ))}
+          </div>
+        )}
+
         <HockeyRink>
-          {shots.map((shot) => {
+          {displayShots.map((shot) => {
             const cx = shot.x * 200;
             const cy = shot.y * 85;
             const isGoal = shot.result === 'goal';
             const isHome = shot.team === 'home';
-            const color = isHome ? '#3b82f6' : '#ef4444';
+            const isAway = shot.team === 'away';
+            const color = isHome ? '#3b82f6' : isAway ? '#ef4444' : '#94a3b8';
 
             return (
               <g key={shot.id}>
@@ -54,31 +100,36 @@ export default function ShotOverlay({ shots, homeTeam, awayTeam, onClose }) {
           })}
         </HockeyRink>
 
-        <div className="flex items-center justify-center gap-6 mt-3 text-sm text-slate-600">
-          <span className="flex items-center gap-1.5">
-            <svg className="w-3 h-3" viewBox="0 0 12 12">
-              <circle cx="6" cy="6" r="5" fill="#3b82f6" />
-            </svg>
-            {homeTeam}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <svg className="w-3 h-3" viewBox="0 0 12 12">
-              <circle cx="6" cy="6" r="5" fill="#ef4444" />
-            </svg>
-            {awayTeam}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <svg className="w-3 h-3" viewBox="0 0 12 12">
-              <circle cx="6" cy="6" r="5" fill="#22c55e" />
-            </svg>
-            Goal (filled)
-          </span>
-          <span className="flex items-center gap-1.5">
-            <svg className="w-3 h-3" viewBox="0 0 12 12">
-              <circle cx="6" cy="6" r="4" fill="none" stroke="#64748b" strokeWidth="1.5" />
-            </svg>
-            Blocked (open)
-          </span>
+        {/* Legend */}
+        <div className="mt-3 space-y-1.5">
+          <div className="flex items-center justify-center gap-5 text-xs text-slate-600">
+            <span className="flex items-center gap-1.5">
+              <svg className="w-3 h-3" viewBox="0 0 12 12">
+                <circle cx="6" cy="6" r="5" fill="#3b82f6" />
+              </svg>
+              {homeTeam} Goal
+            </span>
+            <span className="flex items-center gap-1.5">
+              <svg className="w-3 h-3" viewBox="0 0 12 12">
+                <circle cx="6" cy="6" r="5" fill="#ef4444" />
+              </svg>
+              {awayTeam} Goal
+            </span>
+          </div>
+          <div className="flex items-center justify-center gap-5 text-xs text-slate-600">
+            <span className="flex items-center gap-1.5">
+              <svg className="w-3 h-3" viewBox="0 0 12 12">
+                <circle cx="6" cy="6" r="4" fill="none" stroke="#3b82f6" strokeWidth="1.5" />
+              </svg>
+              {homeTeam} Blocked
+            </span>
+            <span className="flex items-center gap-1.5">
+              <svg className="w-3 h-3" viewBox="0 0 12 12">
+                <circle cx="6" cy="6" r="4" fill="none" stroke="#ef4444" strokeWidth="1.5" />
+              </svg>
+              {awayTeam} Blocked
+            </span>
+          </div>
         </div>
       </div>
     </div>
