@@ -99,7 +99,7 @@ export default function GamePlay({ gameState, onEndGame }) {
       {/* Rink */}
       <div className="flex-1 flex items-center justify-center mb-3">
         <div className="w-full">
-          <HockeyRink onTapRink={currentPeriod !== null ? handleTapRink : null} flipped={flipped}>
+          <HockeyRink onTapRink={currentPeriod !== null ? handleTapRink : null}>
             {/* Fade-out shot confirmation */}
             {fadeShot && (
               <circle

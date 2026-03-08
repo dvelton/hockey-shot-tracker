@@ -2,19 +2,13 @@
    Proportions based on NHL regulation: 200 ft x 85 ft.
    Viewbox uses a 200 x 85 coordinate system for easy math. */
 
-export default function HockeyRink({ onTapRink, flipped = false, children }) {
+export default function HockeyRink({ onTapRink, children }) {
   const handleClick = (e) => {
     if (!onTapRink) return;
     const svg = e.currentTarget;
     const rect = svg.getBoundingClientRect();
-    let x = (e.clientX - rect.left) / rect.width;
-    let y = (e.clientY - rect.top) / rect.height;
-
-    if (flipped) {
-      x = 1 - x;
-      y = 1 - y;
-    }
-
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
     onTapRink(x, y);
   };
 
@@ -24,14 +18,8 @@ export default function HockeyRink({ onTapRink, flipped = false, children }) {
     const touch = e.touches[0];
     const svg = e.currentTarget;
     const rect = svg.getBoundingClientRect();
-    let x = (touch.clientX - rect.left) / rect.width;
-    let y = (touch.clientY - rect.top) / rect.height;
-
-    if (flipped) {
-      x = 1 - x;
-      y = 1 - y;
-    }
-
+    const x = (touch.clientX - rect.left) / rect.width;
+    const y = (touch.clientY - rect.top) / rect.height;
     onTapRink(x, y);
   };
 
