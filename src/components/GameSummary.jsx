@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import ShotMap from './ShotMap';
+import MiniShotMap from './MiniShotMap';
 import Heatmap from './Heatmap';
+import ShotTimeline from './ShotTimeline';
 import { exportToPdf } from '../utils/pdfExport';
 
 export default function GameSummary({ game, onBack }) {
@@ -14,9 +16,9 @@ export default function GameSummary({ game, onBack }) {
   const homeBlocked = homeShots.filter((s) => s.result === 'blocked').length;
   const awayBlocked = awayShots.filter((s) => s.result === 'blocked').length;
 
-  const savePct = (blocked, total) => {
-    if (total === 0) return '-';
-    return ((blocked / total) * 100).toFixed(0) + '%';
+  const pct = (num, denom) => {
+    if (denom === 0) return '-';
+    return ((num / denom) * 100).toFixed(0) + '%';
   };
 
   const periodLabel = (n) => {
@@ -25,6 +27,14 @@ export default function GameSummary({ game, onBack }) {
     if (n === 2) return '2nd';
     if (n === 3) return '3rd';
     return `P${n}`;
+  };
+
+  const periodLabelLong = (n) => {
+    if (n === 'OT') return 'Overtime';
+    if (n === 1) return '1st Period';
+    if (n === 2) return '2nd Period';
+    if (n === 3) return '3rd Period';
+    return `Period ${n}`;
   };
 
   const formatDate = (iso) => {
@@ -42,6 +52,23 @@ export default function GameSummary({ game, onBack }) {
     return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
   };
 
+  // Zone analysis: divide rink into thirds (defensive 0-0.33, neutral 0.33-0.66, offensive 0.66-1.0)
+  const zoneLabel = (x) => {
+    if (x < 0.375) return 'left';
+    if (x > 0.625) return 'right';
+    return 'neutral';
+  };
+
+  const zoneStats = (shots) => {
+    const left = shots.filter((s) => zoneLabel(s.x) === 'left');
+    const neutral = shots.filter((s) => zoneLabel(s.x) === 'neutral');
+    const right = shots.filter((s) => zoneLabel(s.x) === 'right');
+    return { left, neutral, right };
+  };
+
+  const homeZones = zoneStats(homeShots);
+  const awayZones = zoneStats(awayShots);
+
   // Build player stats
   const playerStats = {};
   allShots.forEach((s) => {
@@ -53,12 +80,30 @@ export default function GameSummary({ game, onBack }) {
         number: s.playerNumber,
         shots: 0,
         goals: 0,
+        blocked: 0,
       };
     }
     playerStats[key].shots++;
     if (s.result === 'goal') playerStats[key].goals++;
+    if (s.result === 'blocked') playerStats[key].blocked++;
   });
   const playerList = Object.values(playerStats).sort((a, b) => b.shots - a.shots);
+
+  // Per-period stats helper
+  const periodStats = (period) => {
+    const shots = period.shots;
+    const home = shots.filter((s) => s.team === 'home');
+    const away = shots.filter((s) => s.team === 'away');
+    return {
+      shots,
+      homeShots: home,
+      awayShots: away,
+      homeGoals: home.filter((s) => s.result === 'goal').length,
+      awayGoals: away.filter((s) => s.result === 'goal').length,
+      homeBlocked: home.filter((s) => s.result === 'blocked').length,
+      awayBlocked: away.filter((s) => s.result === 'blocked').length,
+    };
+  };
 
   const handleExport = async () => {
     setExporting(true);
@@ -69,6 +114,23 @@ export default function GameSummary({ game, onBack }) {
       console.error('PDF export failed:', err);
     }
     setExporting(false);
+  };
+
+  // Bar component for zone charts
+  const ZoneBar = ({ label, count, total, color }) => {
+    const width = total > 0 ? (count / total) * 100 : 0;
+    return (
+      <div className="flex items-center gap-2 text-xs">
+        <span className="w-14 text-right text-slate-500 shrink-0">{label}</span>
+        <div className="flex-1 h-4 bg-slate-100 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all"
+            style={{ width: `${width}%`, backgroundColor: color }}
+          />
+        </div>
+        <span className="w-6 text-slate-600 font-semibold">{count}</span>
+      </div>
+    );
   };
 
   return (
@@ -123,7 +185,7 @@ export default function GameSummary({ game, onBack }) {
           </div>
         </div>
 
-        {/* Period breakdown */}
+        {/* Period breakdown table */}
         <div className="mb-6">
           <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">
             Shots by Period
@@ -144,20 +206,32 @@ export default function GameSummary({ game, onBack }) {
               <tbody>
                 <tr className="border-b border-slate-100">
                   <td className="py-2 pr-4 font-medium text-blue-600">{game.homeTeam}</td>
-                  {game.periods.map((p) => (
-                    <td key={p.number} className="text-center py-2 px-2">
-                      {p.shots.filter((s) => s.team === 'home').length}
-                    </td>
-                  ))}
+                  {game.periods.map((p) => {
+                    const ps = periodStats(p);
+                    return (
+                      <td key={p.number} className="text-center py-2 px-2">
+                        {ps.homeShots.length}
+                        {ps.homeGoals > 0 && (
+                          <span className="text-emerald-600 text-xs ml-0.5">({ps.homeGoals}G)</span>
+                        )}
+                      </td>
+                    );
+                  })}
                   <td className="text-center py-2 pl-2 font-bold">{homeShots.length}</td>
                 </tr>
                 <tr>
                   <td className="py-2 pr-4 font-medium text-red-500">{game.awayTeam}</td>
-                  {game.periods.map((p) => (
-                    <td key={p.number} className="text-center py-2 px-2">
-                      {p.shots.filter((s) => s.team === 'away').length}
-                    </td>
-                  ))}
+                  {game.periods.map((p) => {
+                    const ps = periodStats(p);
+                    return (
+                      <td key={p.number} className="text-center py-2 px-2">
+                        {ps.awayShots.length}
+                        {ps.awayGoals > 0 && (
+                          <span className="text-emerald-600 text-xs ml-0.5">({ps.awayGoals}G)</span>
+                        )}
+                      </td>
+                    );
+                  })}
                   <td className="text-center py-2 pl-2 font-bold">{awayShots.length}</td>
                 </tr>
               </tbody>
@@ -165,33 +239,81 @@ export default function GameSummary({ game, onBack }) {
           </div>
         </div>
 
-        {/* Save percentages */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-blue-50 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">
-              {savePct(homeBlocked, homeShots.length)}
-            </div>
-            <div className="text-xs text-slate-500 mt-1">
-              {game.awayTeam} goalie save % vs {game.homeTeam}
-            </div>
+        {/* Key stats grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div className="bg-blue-50 rounded-xl p-3 text-center">
+            <div className="text-xl font-bold text-blue-600">{pct(homeGoals, homeShots.length)}</div>
+            <div className="text-xs text-slate-500">{game.homeTeam} shooting %</div>
           </div>
-          <div className="bg-red-50 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-red-500">
-              {savePct(awayBlocked, awayShots.length)}
+          <div className="bg-red-50 rounded-xl p-3 text-center">
+            <div className="text-xl font-bold text-red-500">{pct(awayGoals, awayShots.length)}</div>
+            <div className="text-xs text-slate-500">{game.awayTeam} shooting %</div>
+          </div>
+          <div className="bg-blue-50 rounded-xl p-3 text-center">
+            <div className="text-xl font-bold text-blue-600">
+              {pct(awayBlocked, awayShots.length)}
             </div>
-            <div className="text-xs text-slate-500 mt-1">
-              {game.homeTeam} goalie save % vs {game.awayTeam}
+            <div className="text-xs text-slate-500">{game.homeTeam} save %</div>
+          </div>
+          <div className="bg-red-50 rounded-xl p-3 text-center">
+            <div className="text-xl font-bold text-red-500">
+              {pct(homeBlocked, homeShots.length)}
             </div>
+            <div className="text-xs text-slate-500">{game.awayTeam} save %</div>
           </div>
         </div>
 
-        {/* Shot map */}
+        {/* Shot momentum timeline */}
+        {allShots.length > 1 && (
+          <div className="mb-6">
+            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">
+              Shot Momentum
+            </h2>
+            <ShotTimeline periods={game.periods} homeTeam={game.homeTeam} awayTeam={game.awayTeam} />
+          </div>
+        )}
+
+        {/* Full-game shot map */}
         <div className="mb-6">
           <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">
-            Shot Map
+            Shot Map (Full Game)
           </h2>
           <ShotMap shots={allShots} homeTeam={game.homeTeam} awayTeam={game.awayTeam} />
         </div>
+
+        {/* Per-period shot maps */}
+        {game.periods.length > 1 && (
+          <div className="mb-6">
+            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
+              Shot Maps by Period
+            </h2>
+            <div className={`grid gap-3 ${game.periods.length <= 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}>
+              {game.periods.map((p) => {
+                const ps = periodStats(p);
+                return (
+                  <div key={p.number} className="bg-slate-50 rounded-xl p-3">
+                    <div className="text-xs font-semibold text-slate-600 text-center mb-1">
+                      {periodLabelLong(p.number)}
+                    </div>
+                    <MiniShotMap
+                      shots={p.shots}
+                      homeTeam={game.homeTeam}
+                      awayTeam={game.awayTeam}
+                    />
+                    <div className="flex justify-center gap-4 mt-1.5 text-xs text-slate-500">
+                      <span className="text-blue-600 font-semibold">
+                        {ps.homeShots.length}S {ps.homeGoals > 0 && `/ ${ps.homeGoals}G`}
+                      </span>
+                      <span className="text-red-500 font-semibold">
+                        {ps.awayShots.length}S {ps.awayGoals > 0 && `/ ${ps.awayGoals}G`}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Heatmap */}
         <div className="mb-6">
@@ -200,6 +322,43 @@ export default function GameSummary({ game, onBack }) {
           </h2>
           <Heatmap shots={allShots} homeTeam={game.homeTeam} awayTeam={game.awayTeam} />
         </div>
+
+        {/* Zone analysis */}
+        {(homeShots.length > 0 || awayShots.length > 0) && (
+          <div className="mb-6">
+            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
+              Shots by Zone
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-slate-50 rounded-xl p-4">
+                <div className="text-sm font-semibold text-blue-600 mb-2">{game.homeTeam}</div>
+                <div className="space-y-1.5">
+                  <ZoneBar label="Left" count={homeZones.left.length} total={homeShots.length} color="#3b82f6" />
+                  <ZoneBar label="Center" count={homeZones.neutral.length} total={homeShots.length} color="#3b82f6" />
+                  <ZoneBar label="Right" count={homeZones.right.length} total={homeShots.length} color="#3b82f6" />
+                </div>
+                <div className="text-xs text-slate-400 mt-2">
+                  {pct(homeZones.left.length, homeShots.length)} left
+                  {' / '}{pct(homeZones.neutral.length, homeShots.length)} center
+                  {' / '}{pct(homeZones.right.length, homeShots.length)} right
+                </div>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-4">
+                <div className="text-sm font-semibold text-red-500 mb-2">{game.awayTeam}</div>
+                <div className="space-y-1.5">
+                  <ZoneBar label="Left" count={awayZones.left.length} total={awayShots.length} color="#ef4444" />
+                  <ZoneBar label="Center" count={awayZones.neutral.length} total={awayShots.length} color="#ef4444" />
+                  <ZoneBar label="Right" count={awayZones.right.length} total={awayShots.length} color="#ef4444" />
+                </div>
+                <div className="text-xs text-slate-400 mt-2">
+                  {pct(awayZones.left.length, awayShots.length)} left
+                  {' / '}{pct(awayZones.neutral.length, awayShots.length)} center
+                  {' / '}{pct(awayZones.right.length, awayShots.length)} right
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Player stats */}
         {playerList.length > 0 && (
@@ -215,6 +374,7 @@ export default function GameSummary({ game, onBack }) {
                     <th className="text-left py-2 pr-4 font-semibold text-slate-600">Team</th>
                     <th className="text-center py-2 px-2 font-semibold text-slate-600">Shots</th>
                     <th className="text-center py-2 px-2 font-semibold text-slate-600">Goals</th>
+                    <th className="text-center py-2 px-2 font-semibold text-slate-600">Sh%</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -226,6 +386,7 @@ export default function GameSummary({ game, onBack }) {
                       </td>
                       <td className="text-center py-2 px-2">{p.shots}</td>
                       <td className="text-center py-2 px-2">{p.goals}</td>
+                      <td className="text-center py-2 px-2">{pct(p.goals, p.shots)}</td>
                     </tr>
                   ))}
                 </tbody>
