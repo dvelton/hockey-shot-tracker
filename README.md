@@ -1,6 +1,6 @@
 # Hockey Shot Tracker
 
-A free, simple app for tracking shots on goal during youth hockey games. Built for coaches and parents who want to turn game data into teachable moments.
+A free, simple app for tracking shots on goal during hockey games. Built for coaches and parents who want to turn game data into teachable moments.
 
 **Use it now:** [dvelton.github.io/hockey-shot-tracker](https://dvelton.github.io/hockey-shot-tracker/)
 
