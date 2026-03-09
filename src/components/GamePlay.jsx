@@ -3,6 +3,8 @@ import HockeyRink from './HockeyRink';
 import ShotPopup from './ShotPopup';
 import ShotOverlay from './ShotOverlay';
 import PeriodControls from './PeriodControls';
+import PeriodReport from './PeriodReport';
+import { exportToPdf } from '../utils/pdfExport';
 
 export default function GamePlay({ gameState, onEndGame }) {
   const {
@@ -20,9 +22,35 @@ export default function GamePlay({ gameState, onEndGame }) {
   const [pendingShot, setPendingShot] = useState(null);
   const [fadeShot, setFadeShot] = useState(null);
   const [showOverlay, setShowOverlay] = useState(false);
+  const [exportingReport, setExportingReport] = useState(false);
 
   // Rink flips for period 2
   const flipped = currentPeriod === 2;
+
+  // Most recently completed period (for intermission report export)
+  const lastCompletedPeriod = (() => {
+    const completed = game.periods.filter((p) => p.endTime);
+    return completed.length > 0 ? completed[completed.length - 1] : null;
+  })();
+
+  const handleExportPeriodReport = async () => {
+    if (!lastCompletedPeriod) return;
+    setExportingReport(true);
+    try {
+      const pNum = lastCompletedPeriod.number;
+      const label = pNum === 'OT' ? 'OT' : `P${pNum}`;
+      const filename = `${game.homeTeam}-vs-${game.awayTeam}-${label}-${game.date.slice(0, 10)}.pdf`;
+      await exportToPdf('period-report', filename);
+    } catch (err) {
+      console.error('Period report export failed:', err);
+    }
+    setExportingReport(false);
+  };
+
+  const exportButtonLabel = (n) => {
+    if (n === 'OT') return 'Export Overtime Report';
+    return `Export Period ${n} Report`;
+  };
 
   const handleTapRink = useCallback(
     (x, y) => {
@@ -188,6 +216,20 @@ export default function GamePlay({ gameState, onEndGame }) {
           </div>
         )}
 
+        {/* Export period report */}
+        {currentPeriod === null && lastCompletedPeriod && (
+          <button
+            onClick={handleExportPeriodReport}
+            disabled={exportingReport}
+            className="w-full py-2.5 flex items-center justify-center gap-2 bg-slate-100 text-slate-700 font-semibold rounded-xl active:bg-slate-200 transition-colors disabled:opacity-50"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            {exportingReport ? 'Exporting...' : exportButtonLabel(lastCompletedPeriod.number)}
+          </button>
+        )}
+
         <PeriodControls
           game={game}
           currentPeriod={currentPeriod}
@@ -218,6 +260,17 @@ export default function GamePlay({ gameState, onEndGame }) {
           awayTeam={game.awayTeam}
           onClose={() => setShowOverlay(false)}
         />
+      )}
+
+      {/* Off-screen period report for PDF export */}
+      {currentPeriod === null && lastCompletedPeriod && (
+        <div style={{ position: 'fixed', left: '-9999px', top: 0 }} aria-hidden="true">
+          <PeriodReport
+            id="period-report"
+            game={game}
+            periodNumber={lastCompletedPeriod.number}
+          />
+        </div>
       )}
     </div>
   );
