@@ -100,6 +100,21 @@ export default function GamePlay({ gameState, onEndGame }) {
       <div className="flex-1 flex items-center justify-center mb-3">
         <div className="w-full relative">
           <HockeyRink onTapRink={currentPeriod !== null ? handleTapRink : null}>
+            {/* Prompt when no period is active */}
+            {currentPeriod === null && (
+              <text
+                x="100"
+                y="42.5"
+                textAnchor="middle"
+                dominantBaseline="central"
+                fill="#64748b"
+                fontSize="5"
+                fontWeight="600"
+                opacity="0.7"
+              >
+                Tap Start Period to begin tracking
+              </text>
+            )}
             {/* Fade-out shot confirmation */}
             {fadeShot && (
               <circle
