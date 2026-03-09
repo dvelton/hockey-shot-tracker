@@ -47,7 +47,7 @@ export default function GamePlay({ gameState, onEndGame }) {
   // Clear fade shot after animation
   useEffect(() => {
     if (!fadeShot) return;
-    const timer = setTimeout(() => setFadeShot(null), 800);
+    const timer = setTimeout(() => setFadeShot(null), 1800);
     return () => clearTimeout(timer);
   }, [fadeShot]);
 
@@ -117,16 +117,24 @@ export default function GamePlay({ gameState, onEndGame }) {
             )}
             {/* Fade-out shot confirmation */}
             {fadeShot && (
-              <circle
-                cx={fadeShot.x * 200}
-                cy={fadeShot.y * 85}
-                r="2.5"
-                fill={fadeShot.team === 'away' ? '#ef4444' : '#3b82f6'}
-                opacity="0.7"
-              >
-                <animate attributeName="opacity" from="0.7" to="0" dur="0.8s" fill="freeze" />
-                <animate attributeName="r" from="2.5" to="5" dur="0.8s" fill="freeze" />
-              </circle>
+              <g>
+                <circle
+                  cx={fadeShot.x * 200}
+                  cy={fadeShot.y * 85}
+                  r="4"
+                  fill={fadeShot.team === 'away' ? '#ef4444' : '#3b82f6'}
+                  className="shot-fade-dot"
+                />
+                <circle
+                  cx={fadeShot.x * 200}
+                  cy={fadeShot.y * 85}
+                  r="6"
+                  fill="none"
+                  stroke={fadeShot.team === 'away' ? '#ef4444' : '#3b82f6'}
+                  strokeWidth="0.6"
+                  className="shot-fade-ring"
+                />
+              </g>
             )}
           </HockeyRink>
 

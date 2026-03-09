@@ -12,3 +12,21 @@ body {
 #root {
   min-height: 100vh;
 }
+
+@keyframes shot-fade {
+  0% { opacity: 0.7; r: 4; }
+  100% { opacity: 0; r: 8; }
+}
+
+@keyframes shot-ring-fade {
+  0% { opacity: 0.6; r: 6; }
+  100% { opacity: 0; r: 12; }
+}
+
+.shot-fade-dot {
+  animation: shot-fade 1.8s ease-out forwards;
+}
+
+.shot-fade-ring {
+  animation: shot-ring-fade 1.8s ease-out forwards;
+}
