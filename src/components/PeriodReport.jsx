@@ -157,17 +157,17 @@ export default function PeriodReport({ game, periodNumber, id }) {
           <tbody>
             <tr className="border-b border-slate-100">
               <td className="py-1.5 pr-3 font-medium text-blue-600">{game.homeTeam}</td>
-              <td className="text-center py-1.5 px-2">{homeShots.length}</td>
-              <td className="text-center py-1.5 px-2 font-semibold">{homeGoals.length}</td>
-              <td className="text-center py-1.5 px-2">{homeBlocked}</td>
-              <td className="text-center py-1.5 px-2">{pct(homeGoals.length, homeShots.length)}</td>
+              <td className="text-center py-1.5 px-2 text-blue-600">{homeShots.length}</td>
+              <td className="text-center py-1.5 px-2 font-semibold text-blue-600">{homeGoals.length}</td>
+              <td className="text-center py-1.5 px-2 text-blue-600">{homeBlocked}</td>
+              <td className="text-center py-1.5 px-2 text-blue-600">{pct(homeGoals.length, homeShots.length)}</td>
             </tr>
             <tr>
               <td className="py-1.5 pr-3 font-medium text-red-500">{game.awayTeam}</td>
-              <td className="text-center py-1.5 px-2">{awayShots.length}</td>
-              <td className="text-center py-1.5 px-2 font-semibold">{awayGoals.length}</td>
-              <td className="text-center py-1.5 px-2">{awayBlocked}</td>
-              <td className="text-center py-1.5 px-2">{pct(awayGoals.length, awayShots.length)}</td>
+              <td className="text-center py-1.5 px-2 text-red-500">{awayShots.length}</td>
+              <td className="text-center py-1.5 px-2 font-semibold text-red-500">{awayGoals.length}</td>
+              <td className="text-center py-1.5 px-2 text-red-500">{awayBlocked}</td>
+              <td className="text-center py-1.5 px-2 text-red-500">{pct(awayGoals.length, awayShots.length)}</td>
             </tr>
           </tbody>
         </table>
@@ -185,8 +185,11 @@ export default function PeriodReport({ game, periodNumber, id }) {
                 <span className={`w-2 h-2 rounded-full shrink-0 ${g.team === 'home' ? 'bg-blue-500' : 'bg-red-500'}`} />
                 <span className="font-medium text-slate-700">{g.teamName}</span>
                 {g.playerNumber && <span className="text-slate-500">#{g.playerNumber}</span>}
+                {g.playerNumber && formatElapsed(g.timestamp) && (
+                  <span className="text-slate-300 mx-1">·</span>
+                )}
                 {formatElapsed(g.timestamp) && (
-                  <span className="text-slate-400 text-xs ml-auto">{formatElapsed(g.timestamp)}</span>
+                  <span className="text-slate-400 text-xs">{formatElapsed(g.timestamp)}</span>
                 )}
               </div>
             ))}
@@ -204,11 +207,11 @@ export default function PeriodReport({ game, periodNumber, id }) {
           <div className="flex justify-center gap-4 mt-1 text-xs">
             <span className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
-              <span className="text-slate-500">{game.homeTeam}</span>
+              <span className="text-blue-600 font-medium">{game.homeTeam}</span>
             </span>
             <span className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
-              <span className="text-slate-500">{game.awayTeam}</span>
+              <span className="text-red-500 font-medium">{game.awayTeam}</span>
             </span>
             <span className="text-slate-400">● goal / ○ blocked</span>
           </div>
